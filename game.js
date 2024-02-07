@@ -20,10 +20,12 @@ const player = {
 const enemies = [];
 
 const keys = [];
-let gamePaused = false; // Track game pause state
-let startTime = Date.now(); // Track start time of the game
-let lastDifficultyIncreaseTime = startTime; // Track the last time the difficulty increased
-let enemyFallSpeed = 10; // Initial falling speed of enemies
+let gamePaused = false;
+let startTime = Date.now();
+let lastDifficultyIncreaseTime = startTime;
+let enemyFallSpeed = 10;
+let previousSurvivedTime = parseFloat(localStorage.getItem('previousSurvivedTime')) || 0;
+let highScore = parseFloat(localStorage.getItem('highScore')) || 0; // Initialize high score from local storage
 
 window.addEventListener("keydown", function(e) {
     keys[e.keyCode] = true;
@@ -44,7 +46,7 @@ let fps = 0;
 let frameCount = 0;
 
 function update(currentTime) {
-    if (!gamePaused) { // Check if game is paused
+    if (!gamePaused) {
         const deltaTime = currentTime - lastTime;
         lastTime = currentTime;
         fps = Math.round(1000 / deltaTime);
@@ -61,42 +63,35 @@ function update(currentTime) {
         player.x += player.velX;
         player.y += player.velY;
         
-        // Prevent player from going off the left and right edges
         if (player.x < 0) {
             player.x = 0;
         } else if (player.x + player.width > canvas.width) {
             player.x = canvas.width - player.width;
         }
         
-        // Prevent player from going off the top and bottom edges
         if (player.y < 0) {
             player.y = 0;
         } else if (player.y + player.height > canvas.height) {
             player.y = canvas.height - player.height;
-            player.jumping = false; // Reset jumping flag when player lands
+            player.jumping = false;
         }
 
-        // Generate enemies
-        if (Math.random() < 0.2) { // Adjust this value to control enemy spawn rate
+        if (Math.random() < 0.2) {
             const enemySize = 30;
             const enemyX = Math.random() * (canvas.width - enemySize);
-            const enemyColor = '#' + Math.floor(Math.random()*16777215).toString(16); // Random hex color
+            const enemyColor = '#' + Math.floor(Math.random()*16777215).toString(16);
             enemies.push({ x: enemyX, y: 0, size: enemySize, color: enemyColor, speed: enemyFallSpeed });
         }
 
-        // Update enemies
         enemies.forEach((enemy, index) => {
-            enemy.y += enemy.speed; // Adjust enemy falling speed
-            // Check collision with player
+            enemy.y += enemy.speed;
             if (player.x < enemy.x + enemy.size &&
                 player.x + player.width > enemy.x &&
                 player.y < enemy.y + enemy.size &&
                 player.y + player.height > enemy.y) {
-                // Collision detected, player "dies" (you can add game over logic here)
-                gamePaused = true; // Pause the game
-                showGameOverScreen(); // Show game over screen
+                gamePaused = true;
+                showGameOverScreen();
             }
-            // Remove enemies that are off the screen
             if (enemy.y > canvas.height) {
                 enemies.splice(index, 1);
             }
@@ -107,28 +102,28 @@ function update(currentTime) {
         ctx.fillStyle = "#FF0000";
         ctx.fillRect(player.x, player.y, player.width, player.height);
 
-        // Draw enemies
         enemies.forEach(enemy => {
             ctx.fillStyle = enemy.color;
             ctx.fillRect(enemy.x, enemy.y, enemy.size, enemy.size);
         });
 
-        ctx.font = "18px Arial";
+        ctx.font = "20px Arial";
         ctx.fillStyle = "black";
         ctx.fillText("FPS: " + fps, 10, 20);
-        ctx.fillText("Coordinates: (" + player.x + ", " + player.y + ")", 10, 40);
-        ctx.fillText("Time survived: " + ((Date.now() - startTime) / 1000).toFixed(1) + " seconds", 10, 60); // Display time survived in seconds
+        ctx.fillText("Time survived: " + ((Date.now() - startTime) / 1000).toFixed(1) + "s", 10, 40);
+        ctx.fillText("Previous Survived Time: " + previousSurvivedTime.toFixed(1) + "s", 10, 60);
+        ctx.fillText("High Survived Time: " + highScore.toFixed(1) + "s", 10, 80);
         
         frameCount++;
         requestAnimationFrame(update);
     }
     
-    // Increase difficulty every 10 seconds
     if (!gamePaused && (currentTime - lastDifficultyIncreaseTime) >= 10000) {
         lastDifficultyIncreaseTime = currentTime;
-        enemyFallSpeed += 50; // Increase falling speed of enemies
+        enemyFallSpeed += 50;
     }
 }
+
 
 function updateFPS() {
     fps = frameCount;
@@ -148,18 +143,26 @@ function showGameOverScreen() {
     gameOverScreen.style.color = 'white';
     gameOverScreen.innerHTML = '<h1>Game Over</h1><p>You died!</p><button onclick="restartGame()">Restart</button>';
     document.body.appendChild(gameOverScreen);
+    
+    previousSurvivedTime = (Date.now() - startTime) / 1000;
+    localStorage.setItem('previousSurvivedTime', previousSurvivedTime.toString()); // Save previous survived time
+    
+    if (previousSurvivedTime > highScore) { // Update high score if the current survived time is higher
+        highScore = previousSurvivedTime;
+        localStorage.setItem('highScore', highScore.toString());
+    }
 }
 
 function restartGame() {
-    gamePaused = false; // Unpause the game
-    enemies.length = 0; // Clear the enemies array
-    player.x = 50; // Reset player position
+    gamePaused = false;
+    enemies.length = 0;
+    player.x = 50;
     player.y = canvas.height - 50;
-    startTime = Date.now(); // Reset start time
-    lastDifficultyIncreaseTime = startTime; // Reset difficulty increase time
-    enemyFallSpeed = 10; // Reset falling speed of enemies
-    document.querySelector('div').remove(); // Remove the game over screen
-    requestAnimationFrame(update); // Restart the game loop
+    startTime = Date.now();
+    lastDifficultyIncreaseTime = startTime;
+    enemyFallSpeed = 10;
+    document.querySelector('div').remove();
+    requestAnimationFrame(update);
 }
 
 updateFPS();
