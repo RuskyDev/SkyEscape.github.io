@@ -77,7 +77,7 @@ function update(currentTime) {
         }
 
         // Generate enemies
-        if (Math.random() < 0.2) { // Adjust this value to control enemy spawn rate
+        if (Math.random() < 1) { // Adjust this value to control enemy spawn rate
             const enemySize = 30;
             const enemyX = Math.random() * (canvas.width - enemySize);
             const enemyColor = '#' + Math.floor(Math.random()*16777215).toString(16); // Random hex color
