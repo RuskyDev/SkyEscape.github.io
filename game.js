@@ -9,7 +9,7 @@ const player = {
     y: canvas.height - 50,
     width: 50,
     height: 50,
-    speed: 20,
+    speed: 8,
     jumpStrength: 10,
     gravity: 0.5,
     velX: 0,
