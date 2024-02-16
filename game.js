@@ -151,7 +151,12 @@ function showGameOverScreen() {
         highScore = previousSurvivedTime;
         localStorage.setItem('highScore', highScore.toString());
     }
+
+    // Play game over sound
+    const gameOverSound = document.getElementById('gameOverSound');
+    gameOverSound.play();
 }
+
 
 function restartGame() {
     gamePaused = false;
